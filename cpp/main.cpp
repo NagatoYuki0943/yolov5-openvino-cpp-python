@@ -37,7 +37,7 @@ Resize resize_and_pad(cv::Mat& img, cv::Size new_shape) {
     cv::resize(img, resize.resized_image, cv::Size(new_unpadW, new_unpadH), 0, 0, cv::INTER_AREA);
 
     resize.dw = new_shape.width - new_unpadW;
-    resize.dh = new_shape.height - new_unpadH; 
+    resize.dh = new_shape.height - new_unpadH;
     cv::Scalar color = cv::Scalar(100, 100, 100);
     cv::copyMakeBorder(resize.resized_image, resize.resized_image, 0, resize.dh, 0, resize.dw, cv::BORDER_CONSTANT, color);
 
@@ -79,19 +79,19 @@ int main(){
     ov::Tensor input_tensor = ov::Tensor(compiled_model.input().get_element_type(), compiled_model.input().get_shape(), input_data);
 
 
-    // Step 6. Create an infer request for model inference 
+    // Step 6. Create an infer request for model inference
     ov::InferRequest infer_request = compiled_model.create_infer_request();
     infer_request.set_input_tensor(input_tensor);
     infer_request.infer();
 
 
-    //Step 7. Retrieve inference results 
+    //Step 7. Retrieve inference results
     const ov::Tensor &output_tensor = infer_request.get_output_tensor();
     ov::Shape output_shape = output_tensor.get_shape();
     float *detections = output_tensor.data<float>();
 
-    
-    // Step 8. Postprocessing including NMS  
+
+    // Step 8. Postprocessing including NMS
     std::vector<cv::Rect> boxes;
     vector<int> class_ids;
     vector<float> confidences;
