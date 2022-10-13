@@ -1,0 +1,5 @@
+.idea
+cmake-build-debug/*
+!cmake-build-debug/openvino_detection.png
+cmake-build-release/*
+!cmake-build-release/openvino_detection.png

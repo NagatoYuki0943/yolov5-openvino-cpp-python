@@ -18,8 +18,6 @@ import os, sys
 os.chdir(sys.path[0])
 
 
-MODEL_PATH = "../model/yolov5n.xml"
-IMAGE_PATH = "../imgs/bus.jpg"
 SCORE_THRESHOLD = 0.2
 NMS_THRESHOLD = 0.4
 CONFIDENCE_THRESHOLD = 0.4
@@ -73,12 +71,12 @@ def get_image(image_path):
     return img, input_tensor, delta_w ,delta_h
 
 
-def get_model(model_path):
+def get_model(model_path, device='CPU'):
     """获取模型
 
     Args:
         model_path (str): 模型路径
-
+        device (str):     模型设备, CPU or GPU
     Returns:
         CompileModel: 编译好的模型
     """
@@ -99,9 +97,12 @@ def get_model(model_path):
     ppp.output().tensor().set_element_type(Type.f32)
     # Embed above steps in the graph
     model = ppp.build()
-    compiled_model = core.compile_model(model, "CPU")
+    compiled_model = core.compile_model(model, device)
 
-    return compiled_model
+    # Step 6. Create an infer request for model inference
+    infer_request = compiled_model.create_infer_request()
+
+    return infer_request
 
 
 def post(detections, delta_w ,delta_h, img):
@@ -167,17 +168,18 @@ def post(detections, delta_w ,delta_h, img):
 
 
 def main():
+    MODEL_PATH = "../model/yolov5s.xml"
+    IMAGE_PATH = "../imgs/bus.jpg"
+
     # 获取图片,扩展的宽高
     img, input_tensor, delta_w ,delta_h = get_image(IMAGE_PATH)
 
     # 获取模型
-    compiled_model = get_model(MODEL_PATH)
+    infer_request = get_model(MODEL_PATH, 'CPU')
 
     start = time.time()
-    # Step 6. Create an infer request for model inference
-    infer_request = compiled_model.create_infer_request()
-    infer_request.infer({0: input_tensor})
 
+    infer_request.infer({0: input_tensor})
     # Step 7. Retrieve inference results
     output = infer_request.get_output_tensor()
     detections = output.data[0]

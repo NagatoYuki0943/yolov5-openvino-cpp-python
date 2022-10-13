@@ -1,2 +1,2 @@
-openvino
-opencv-python
+openvino-dev==2022.1
+opencv-python==4.5.5 # Compatible with openvino-dev==2022.1
