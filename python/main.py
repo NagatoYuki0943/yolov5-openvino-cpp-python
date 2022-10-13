@@ -85,15 +85,16 @@ def get_model(model_path, device='CPU'):
     # Step 2. Read a model
     model = core.read_model(str(Path(model_path)))
 
-    # Step 4. Inizialize Preprocessing for the model
+    # Step 4. Inizialize Preprocessing for the model  openvino数据预处理
+    # https://mp.weixin.qq.com/s/4lkDJC95at2tK_Zd62aJxw
     ppp = PrePostProcessor(model)
-    # Specify input image format
+    # Specify input image format 设定图片数据类型，形状，通道排布为BGR
     ppp.input().tensor().set_element_type(Type.u8).set_layout(Layout("NHWC")).set_color_format(ColorFormat.BGR)
-    #  Specify preprocess pipeline to input image without resizing
+    #  Specify preprocess pipeline to input image without resizing 预处理：改变类型，转换为RGB，通道归一化
     ppp.input().preprocess().convert_element_type(Type.f32).convert_color(ColorFormat.RGB).scale([255., 255., 255.])
-    # Specify model's input layout
+    # Specify model's input layout 指定模型输入形状
     ppp.input().model().set_layout(Layout("NCHW"))
-    #  Specify output results format
+    #  Specify output results format 指定模型输出类型
     ppp.output().tensor().set_element_type(Type.f32)
     # Embed above steps in the graph
     model = ppp.build()
