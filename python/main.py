@@ -169,7 +169,7 @@ def post(detections, delta_w ,delta_h, img):
 
 
 def main():
-    MODEL_PATH = "../model/yolov5s.xml"
+    MODEL_PATH = "../model/yolov5s_openvino_model/yolov5s.xml"
     IMAGE_PATH = "../imgs/bus.jpg"
 
     # 获取图片,扩展的宽高
