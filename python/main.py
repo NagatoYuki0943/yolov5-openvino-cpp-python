@@ -20,9 +20,9 @@ import os, sys
 os.chdir(sys.path[0])
 
 
-CONFIDENCE_THRESHOLD = 0.4
+CONFIDENCE_THRESHOLD = 0.25
 SCORE_THRESHOLD = 0.2
-NMS_THRESHOLD = 0.4
+NMS_THRESHOLD = 0.45
 
 
 def get_image(image_path):

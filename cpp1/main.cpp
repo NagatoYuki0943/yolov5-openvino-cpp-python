@@ -6,13 +6,13 @@
 using namespace std;
 
 
+const float CONFIDENCE_THRESHOLD = 0.25;
 const float SCORE_THRESHOLD = 0.2;
-const float NMS_THRESHOLD = 0.4;
-const float CONFIDENCE_THRESHOLD = 0.4;
+const float NMS_THRESHOLD = 0.45;
 
 
 /**
- * ±£´æ¼ì²âµ½µÄid£¬ÖÃÐÅ¶ÈºÍ¿ò
+ * ï¿½ï¿½ï¿½ï¿½ï¿½âµ½ï¿½ï¿½idï¿½ï¿½ï¿½ï¿½ï¿½Å¶ÈºÍ¿ï¿½
  */
 struct Detection
 {
@@ -23,7 +23,7 @@ struct Detection
 
 
 /**
- * ±£´æresizeµÄÍ¼Æ¬ºÍÌî³äµÄ¿í¸ß
+ * ï¿½ï¿½ï¿½ï¿½resizeï¿½ï¿½Í¼Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
  */
 struct Resize
 {
@@ -35,7 +35,7 @@ struct Resize
 
 
 /**
- * Ëõ·ÅÍ¼Æ¬£¬½«Í¼Æ¬µÄ³¤±ßµ÷Õûµ½Ö¸¶¨¿í¸ß£¬¶Ì±ßÔÚÓÒÏÂÌî³ä¿Õ°×
+ * ï¿½ï¿½ï¿½ï¿½Í¼Æ¬ï¿½ï¿½ï¿½ï¿½Í¼Æ¬ï¿½Ä³ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ß£ï¿½ï¿½Ì±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ°ï¿½
  * @param img
  * @param new_shape
  * @return resize
@@ -60,8 +60,8 @@ Resize resize_and_pad(cv::Mat& img, cv::Size new_shape) {
 
 
 /**
- * »ñÈ¡Ô­Ê¼Í¼Æ¬£¬resizeÍ¼Æ¬£¬Ìî³äµÄ¿í¸ß
- * @param image_path Í¼Æ¬Â·¾¶
+ * ï¿½ï¿½È¡Ô­Ê¼Í¼Æ¬ï¿½ï¿½resizeÍ¼Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+ * @param image_path Í¼Æ¬Â·ï¿½ï¿½
  * @return Resize
  */
 Resize get_image(const string& image_path){
@@ -74,7 +74,7 @@ Resize get_image(const string& image_path){
 
 
 /**
- * »ñÈ¡±àÒëºÃµÄÄ£ÐÍ
+ * ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ãµï¿½Ä£ï¿½ï¿½
  * @param model_path
  * @return CompiledModel
  */
@@ -84,18 +84,18 @@ ov::CompiledModel get_model(const string& model_path, const string& device="CPU"
     // Step 2. Read a model
     std::shared_ptr<ov::Model> model = core.read_model(model_path);
 
-    // Step 4. Inizialize Preprocessing for the model   openvinoÊý¾ÝÔ¤´¦Àí
+    // Step 4. Inizialize Preprocessing for the model   openvinoï¿½ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½
     // https://mp.weixin.qq.com/s/4lkDJC95at2tK_Zd62aJxw
     ov::preprocess::PrePostProcessor ppp = ov::preprocess::PrePostProcessor(model);
-    // Specify input image format Éè¶¨Í¼Æ¬Êý¾ÝÀàÐÍ£¬ÐÎ×´£¬Í¨µÀÅÅ²¼ÎªBGR
+    // Specify input image format ï¿½è¶¨Í¼Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½×´ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Å²ï¿½ÎªBGR
     ppp.input().tensor().set_element_type(ov::element::u8).set_layout("NHWC")
         .set_color_format(ov::preprocess::ColorFormat::BGR);
-    // Specify preprocess pipeline to input image without resizing  Ô¤´¦Àí£º¸Ä±äÀàÐÍ£¬×ª»»ÎªRGB£¬Í¨µÀ¹éÒ»»¯
+    // Specify preprocess pipeline to input image without resizing  Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½Í£ï¿½×ªï¿½ï¿½ÎªRGBï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
     ppp.input().preprocess().convert_element_type(ov::element::f32)
         .convert_color(ov::preprocess::ColorFormat::RGB).scale({255., 255., 255.});
-    //  Specify model's input layout Ö¸¶¨Ä£ÐÍÊäÈëÐÎ×´
+    //  Specify model's input layout Ö¸ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´
     ppp.input().model().set_layout("NCHW");
-    // Specify output results format Ö¸¶¨Ä£ÐÍÊä³öÀàÐÍ
+    // Specify output results format Ö¸ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     ppp.output().tensor().set_element_type(ov::element::f32);
     // Embed above steps in the graph
     model = ppp.build();
@@ -105,9 +105,9 @@ ov::CompiledModel get_model(const string& model_path, const string& device="CPU"
 
 
 /**
- * ºó´¦Àí
- * @param detections Ä£ÐÍÊä³ö
- * @param output_shape Êä³öÐÎ×´
+ * ï¿½ï¿½ï¿½ï¿½
+ * @param detections Ä£ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param output_shape ï¿½ï¿½ï¿½ï¿½ï¿½×´
  * @param res Resize
  */
 void post(float *detections, ov::Shape output_shape, Resize& res){
@@ -196,15 +196,15 @@ int main(){
     string model_path = "D:/ai/code/ultralytics/yolov5-openvino-cpp-python/weights/yolov5s_openvino_model_quantization/yolov5s.xml";
     string image_path = "D:/ai/code/ultralytics/yolov5-openvino-cpp-python/imgs/bus.jpg";
 
-    //»ñÈ¡Ô­Ê¼Í¼Æ¬£¬resizeÍ¼Æ¬£¬Ìî³äµÄ¿í¸ß
+    //ï¿½ï¿½È¡Ô­Ê¼Í¼Æ¬ï¿½ï¿½resizeÍ¼Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
     Resize res = get_image(image_path);
 
-    //»ñÈ¡Ä£ÐÍ
+    //ï¿½ï¿½È¡Ä£ï¿½ï¿½
     ov::CompiledModel compiled_model = get_model(model_path, "CPU");
 
-    //¼ÇÂ¼¿ªÊ¼Ê±¼ä£¬ms
+    //ï¿½ï¿½Â¼ï¿½ï¿½Ê¼Ê±ï¿½ä£¬ms
     auto start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    //ÍÆÀí
+    //ï¿½ï¿½ï¿½ï¿½
     // Step 5. Create tensor from image
     float *input_data = (float *) res.resized_image.data;
     ov::Tensor input_tensor = ov::Tensor(compiled_model.input().get_element_type(), compiled_model.input().get_shape(), input_data);
@@ -217,12 +217,12 @@ int main(){
     ov::Shape output_shape = output_tensor.get_shape();
     float *detections = output_tensor.data<float>();
 
-    //ºó´¦Àí
+    //ï¿½ï¿½ï¿½ï¿½
     post(detections, output_shape, res);
-    //¼ÇÂ¼½áÊøÊ±¼ä£¬ms
+    //ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£¬ms
     auto end = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     cout << end - start << "ms" << endl;
-    //±£´æÍ¼Æ¬
+    //ï¿½ï¿½ï¿½ï¿½Í¼Æ¬
     cv::imwrite("./openvino_detection.png", res.img);
     cv::imshow("openvino_detection", res.img);
     cv::waitKey(0);
