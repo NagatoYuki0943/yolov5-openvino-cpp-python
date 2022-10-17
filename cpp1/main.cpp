@@ -193,7 +193,7 @@ void post(float *detections, ov::Shape output_shape, Resize& res){
 
 int main(){
     //                                                                       or  yolov5s_openvino_model
-    string model_path = "D:/ai/code/ultralytics/yolov5-openvino-cpp-python/model/yolov5s_openvino_model_quantization/yolov5s.xml";
+    string model_path = "D:/ai/code/ultralytics/yolov5-openvino-cpp-python/weights/yolov5s_openvino_model_quantization/yolov5s.xml";
     string image_path = "D:/ai/code/ultralytics/yolov5-openvino-cpp-python/imgs/bus.jpg";
 
     //获取原始图片，resize图片，填充的宽高
