@@ -114,12 +114,13 @@ def main():
     # 获取输出
     # output = infer_request.get_output_tensor()
     output = infer_request.get_output_tensor(outputs_names[0].index)
-    detections = output.data[0]
+    print(output.data.shape)        # (1, 25200, 85)
+    detections = output.data[0]     # 去除batch
 
     # Step 8. Postprocessing including NMS
     img = post(detections, delta_w ,delta_h, img, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, NMS_THRESHOLD, index2label)
     end = time.time()
-    print((end - start) * 1000)
+    print('time:', (end - start) * 1000)
 
     cv2.imwrite("./openvion_det.png", img)
 
