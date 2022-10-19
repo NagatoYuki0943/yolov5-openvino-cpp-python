@@ -95,7 +95,7 @@ def main():
     # Step 6. Create an infer request for model inference
     infer_request = compiled_model.create_infer_request()
 
-    # 获取模型的一些数据
+    # 获取模型的一些数据,多个输出和输出使用 [0] [1] 取出
     inputs_names = compiled_model.inputs
     outputs_names = compiled_model.outputs
     print(f"inputs_names: {inputs_names}")  # inputs_names: [<ConstOutput: names[images] shape{1,640,640,3} type: u8>]
