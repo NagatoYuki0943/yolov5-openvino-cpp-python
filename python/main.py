@@ -77,10 +77,7 @@ def get_model(model_path, device='CPU'):
     model = ppp.build()
     compiled_model = core.compile_model(model, device)
 
-    # Step 6. Create an infer request for model inference
-    infer_request = compiled_model.create_infer_request()
-
-    return infer_request
+    return compiled_model
 
 
 def main():
@@ -93,16 +90,30 @@ def main():
     img, input_tensor, delta_w ,delta_h = get_image(IMAGE_PATH)
 
     # 获取模型
-    infer_request = get_model(MODEL_PATH, 'CPU')
+    compiled_model = get_model(MODEL_PATH, 'CPU')
+
+    # Step 6. Create an infer request for model inference
+    infer_request = compiled_model.create_infer_request()
+
+    # 获取模型的一些数据
+    inputs_names = compiled_model.inputs
+    outputs_names = compiled_model.outputs
+    print(f"inputs_names: {inputs_names}")  # inputs_names: [<ConstOutput: names[images] shape{1,640,640,3} type: u8>]
+    print(inputs_names[0].names, inputs_names[0].shape, inputs_names[0].index)      # {'images'} {1, 640, 640, 3} 0
+    print(f"outputs_names: {outputs_names}")# outputs_names: [<ConstOutput: names[output0] shape{1,25200,85} type: f32>]
+    print(outputs_names[0].names, outputs_names[0].shape, outputs_names[0].index)   # {'output0'} {1, 25200, 85} 0
 
     # 获取label
     index2label = get_index2label(YAML_PATH)
 
     start = time.time()
     # 设置输入
-    infer_request.infer({0: input_tensor})
+    # infer_request.infer({0: input_tensor}) # 两种方式
+    infer_request.infer({inputs_names[0]: input_tensor})
+
     # 获取输出
-    output = infer_request.get_output_tensor()
+    # output = infer_request.get_output_tensor()
+    output = infer_request.get_output_tensor(outputs_names[0].index)
     detections = output.data[0]
 
     # Step 8. Postprocessing including NMS
