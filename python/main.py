@@ -92,30 +92,31 @@ def main():
     # 获取模型
     compiled_model = get_model(MODEL_PATH, 'CPU')
 
+    # 获取label
+    index2label = get_index2label(YAML_PATH)
+
     # Step 6. Create an infer request for model inference
     infer_request = compiled_model.create_infer_request()
 
     # 获取模型的一些数据,多个输出和输出使用 [0] [1] 取出
     inputs_names = compiled_model.inputs
     outputs_names = compiled_model.outputs
-    print(f"inputs_names: {inputs_names}")  # inputs_names: [<ConstOutput: names[images] shape{1,640,640,3} type: u8>]
-    print(inputs_names[0].names, inputs_names[0].shape, inputs_names[0].index)      # {'images'} {1, 640, 640, 3} 0
-    print(f"outputs_names: {outputs_names}")# outputs_names: [<ConstOutput: names[output0] shape{1,25200,85} type: f32>]
-    print(outputs_names[0].names, outputs_names[0].shape, outputs_names[0].index)   # {'output0'} {1, 25200, 85} 0
-
-    # 获取label
-    index2label = get_index2label(YAML_PATH)
+    print(f"inputs_names: {inputs_names}")      # inputs_names: [<ConstOutput: names[images] shape{1,640,640,3} type: u8>]
+    # print(inputs_names[0].names, inputs_names[0].shape, inputs_names[0].index)      # {'images'} {1, 640, 640, 3} 0
+    print(f"outputs_names: {outputs_names}")    # outputs_names: [<ConstOutput: names[output0] shape{1,25200,85} type: f32>]
+    # print(outputs_names[0].names, outputs_names[0].shape, outputs_names[0].index)   # {'output0'} {1, 25200, 85} 0
 
     start = time.time()
     # 设置输入
-    # infer_request.infer({0: input_tensor}) # 两种方式
-    infer_request.infer({inputs_names[0]: input_tensor})
+    # infer_request.set_tensor(input_port, input_tensor)
+    outputs = infer_request.infer({inputs_names[0]: input_tensor})
+    # print(outputs.keys)       # <built-in method keys of dict object at 0x0000019A7C7C68C0>
 
     # 获取输出
-    # output = infer_request.get_output_tensor()
-    output = infer_request.get_output_tensor(outputs_names[0].index)
-    print(output.data.shape)        # (1, 25200, 85)
-    detections = output.data[0]     # 去除batch
+    # output = infer_request.get_output_tensor(outputs_names[0].index)
+    output = outputs[outputs_names[0]]
+    print(output.shape)         # (1, 25200, 85)
+    detections = output[0]      # 去除batch
 
     # Step 8. Postprocessing including NMS
     img = post(detections, delta_w ,delta_h, img, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, NMS_THRESHOLD, index2label)
