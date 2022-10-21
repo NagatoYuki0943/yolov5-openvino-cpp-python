@@ -108,12 +108,12 @@ def main():
 
     start = time.time()
     # 设置输入
-    # infer_request.set_tensor(input_port, input_tensor)
+    # infer_request.set_input_tensor(inputs_names[0].index, input_tensor)   # 有错误
     outputs = infer_request.infer({inputs_names[0]: input_tensor})
     # print(outputs.keys)       # <built-in method keys of dict object at 0x0000019A7C7C68C0>
 
     # 获取输出
-    # output = infer_request.get_output_tensor(outputs_names[0].index)
+    # output = infer_request.get_output_tensor(outputs_names[0].index)      # outputs_names[0].index 可以用0 1代替
     output = outputs[outputs_names[0]]
     print(output.shape)         # (1, 25200, 85)
     detections = output[0]      # 去除batch
