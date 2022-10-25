@@ -86,18 +86,19 @@ ov::CompiledModel get_model(const string& model_path, const string& device="CPU"
 
     // Step 4. Inizialize Preprocessing for the model
     // https://mp.weixin.qq.com/s/4lkDJC95at2tK_Zd62aJxw
+    // https://blog.csdn.net/sandmangu/article/details/107181289
     // https://docs.openvino.ai/latest/openvino_2_0_preprocessing.html
     ov::preprocess::PrePostProcessor ppp = ov::preprocess::PrePostProcessor(model);
-    // Specify input image format
-    ppp.input().tensor().set_element_type(ov::element::u8).set_layout("NHWC")
+    // Specify input image format   input(0) refers to the 0th input.
+    ppp.input(0).tensor().set_element_type(ov::element::u8).set_layout(ov::Layout("NHWC"))
         .set_color_format(ov::preprocess::ColorFormat::BGR);
     // Specify preprocess pipeline to input image without resizing
-    ppp.input().preprocess().convert_element_type(ov::element::f32)
+    ppp.input(0).preprocess().convert_element_type(ov::element::f32)
         .convert_color(ov::preprocess::ColorFormat::RGB).scale({255., 255., 255.});
     //  Specify model's input layout
-    ppp.input().model().set_layout("NCHW");
+    ppp.input(0).model().set_layout(ov::Layout("NCHW"));
     // Specify output results format
-    ppp.output().tensor().set_element_type(ov::element::f32);
+    ppp.output(0).tensor().set_element_type(ov::element::f32);
     // Embed above steps in the graph
     model = ppp.build();
     ov::CompiledModel compiled_model = core.compile_model(model, device);

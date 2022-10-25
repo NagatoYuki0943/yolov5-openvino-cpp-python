@@ -64,16 +64,17 @@ def get_model(model_path, device='CPU'):
 
     # Step 4. Inizialize Preprocessing for the model  openvino数据预处理
     # https://mp.weixin.qq.com/s/4lkDJC95at2tK_Zd62aJxw
+    # https://blog.csdn.net/sandmangu/article/details/107181289
     # https://docs.openvino.ai/latest/openvino_2_0_preprocessing.html
     ppp = PrePostProcessor(model)
-    # Specify input image format 设定图片数据类型，形状，通道排布为BGR
-    ppp.input().tensor().set_element_type(Type.u8).set_layout(Layout("NHWC")).set_color_format(ColorFormat.BGR)
-    # Specify preprocess pipeline to input image without resizing 预处理: 改变类型,转换为RGB,通道归一化(标准化中的除以均值也能这样求),还有.mean()均值
-    ppp.input().preprocess().convert_element_type(Type.f32).convert_color(ColorFormat.RGB).scale([255., 255., 255.])
-    # Specify model's input layout 指定模型输入形状
-    ppp.input().model().set_layout(Layout("NCHW"))
-    # Specify output results format 指定模型输出类型
-    ppp.output().tensor().set_element_type(Type.f32)
+    # 设定图片数据类型，形状，通道排布为BGR     input(0) 指的是第0个输入
+    ppp.input(0).tensor().set_element_type(Type.u8).set_layout(Layout("NHWC")).set_color_format(ColorFormat.BGR)
+    # 预处理: 改变类型,转换为RGB,通道归一化(标准化中的除以均值也能这样求),还有.mean()均值 mean要在scale前面
+    ppp.input(0).preprocess().convert_element_type(Type.f32).convert_color(ColorFormat.RGB).scale([255., 255., 255.])
+    # 指定模型输入形状
+    ppp.input(0).model().set_layout(Layout("NCHW"))
+    # 指定模型输出类型
+    ppp.output(0).tensor().set_element_type(Type.f32)
     # Embed above steps in the graph
     model = ppp.build()
     compiled_model = core.compile_model(model, device)
