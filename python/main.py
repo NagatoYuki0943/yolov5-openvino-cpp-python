@@ -67,7 +67,7 @@ def get_model(model_path, device='CPU'):
     ppp = PrePostProcessor(model)
     # Specify input image format 设定图片数据类型，形状，通道排布为BGR
     ppp.input().tensor().set_element_type(Type.u8).set_layout(Layout("NHWC")).set_color_format(ColorFormat.BGR)
-    #  Specify preprocess pipeline to input image without resizing 预处理：改变类型，转换为RGB，通道归一化
+    #  Specify preprocess pipeline to input image without resizing 预处理: 改变类型,转换为RGB,通道归一化(标准化中的除以均值也能这样求),还有.mean()均值
     ppp.input().preprocess().convert_element_type(Type.f32).convert_color(ColorFormat.RGB).scale([255., 255., 255.])
     # Specify model's input layout 指定模型输入形状
     ppp.input().model().set_layout(Layout("NCHW"))
@@ -99,27 +99,27 @@ def main():
     infer_request = compiled_model.create_infer_request()
 
     # 获取模型的一些数据,多个输出和输出使用 [0] [1] 取出
-    inputs_names = compiled_model.inputs
-    outputs_names = compiled_model.outputs
-    print(f"inputs_names: {inputs_names}")      # inputs_names: [<ConstOutput: names[images] shape{1,640,640,3} type: u8>]
-    # print(inputs_names[0].names, inputs_names[0].shape, inputs_names[0].index)      # {'images'} {1, 640, 640, 3} 0
-    print(f"outputs_names: {outputs_names}")    # outputs_names: [<ConstOutput: names[output0] shape{1,25200,85} type: f32>]
-    # print(outputs_names[0].names, outputs_names[0].shape, outputs_names[0].index)   # {'output0'} {1, 25200, 85} 0
+    inputs = compiled_model.inputs
+    outputs = compiled_model.outputs
+    print(f"inputs: {inputs}")                                      # inputs: [<ConstOutput: names[images] shape{1,640,640,3} type: u8>]
+    print(inputs[0].index, inputs[0].names, inputs[0].shape, )      # 0 {'images'} {1, 640, 640, 3}
+    print(f"outputs: {outputs}")                                    # outputs: [<ConstOutput: names[output0] shape{1,25200,85} type: f32>]
+    print(outputs[0].index, outputs[0].names, outputs[0].shape, )   # 0 {'output0'} {1, 25200, 85}
 
     start = time.time()
     # 设置输入
-    # infer_request.set_input_tensor(inputs_names[0].index, input_tensor)   # 有错误
+    # infer_request.set_input_tensor(inputs[0].index, input_tensor)   # 有错误
 
-    # 推理
-    # outputs = infer_request.infer({0: input_tensor})   # 两种方式
-    outputs = infer_request.infer({inputs_names[0]: input_tensor})
+    # 推理 两种方式
+    # results = infer_request.infer({0: input_tensor})
+    results = infer_request.infer({inputs[0]: input_tensor})
     # print(outputs.keys)           # <built-in method keys of dict object at 0x0000019A7C7C68C0>
 
     # 获取输出
-    # output = infer_request.get_output_tensor(outputs_names[0].index)      # outputs_names[0].index 可以用0 1代替
-    output = outputs[outputs_names[0]]
-    print(output.shape)         # (1, 25200, 85)
-    detections = output[0]      # 去除batch
+    # result = infer_request.get_output_tensor(outputs[0].index)      # outputs[0].index 可以用0 1代替
+    result = results[outputs[0]]
+    print(result.shape)             # (1, 25200, 85)
+    detections = result[0]          # 去除batch
 
     # Step 8. Postprocessing including NMS
     img = post(detections, delta_w ,delta_h, img, CONFIDENCE_THRESHOLD, SCORE_THRESHOLD, NMS_THRESHOLD, index2label)
