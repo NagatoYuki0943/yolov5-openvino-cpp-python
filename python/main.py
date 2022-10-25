@@ -67,11 +67,11 @@ def get_model(model_path, device='CPU'):
     ppp = PrePostProcessor(model)
     # Specify input image format 设定图片数据类型，形状，通道排布为BGR
     ppp.input().tensor().set_element_type(Type.u8).set_layout(Layout("NHWC")).set_color_format(ColorFormat.BGR)
-    #  Specify preprocess pipeline to input image without resizing 预处理: 改变类型,转换为RGB,通道归一化(标准化中的除以均值也能这样求),还有.mean()均值
+    # Specify preprocess pipeline to input image without resizing 预处理: 改变类型,转换为RGB,通道归一化(标准化中的除以均值也能这样求),还有.mean()均值
     ppp.input().preprocess().convert_element_type(Type.f32).convert_color(ColorFormat.RGB).scale([255., 255., 255.])
     # Specify model's input layout 指定模型输入形状
     ppp.input().model().set_layout(Layout("NCHW"))
-    #  Specify output results format 指定模型输出类型
+    # Specify output results format 指定模型输出类型
     ppp.output().tensor().set_element_type(Type.f32)
     # Embed above steps in the graph
     model = ppp.build()

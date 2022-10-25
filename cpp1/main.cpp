@@ -12,7 +12,7 @@ const float NMS_THRESHOLD = 0.45;
 
 
 /**
- * �����⵽��id�����ŶȺͿ�
+ * save classid confidence and box
  */
 struct Detection
 {
@@ -23,7 +23,7 @@ struct Detection
 
 
 /**
- * ����resize��ͼƬ�����Ŀ���
+ * origin image, resized image and h w
  */
 struct Resize
 {
@@ -35,7 +35,7 @@ struct Resize
 
 
 /**
- * ����ͼƬ����ͼƬ�ĳ��ߵ�����ָ�����ߣ��̱����������հ�
+ * Zooms the picture to the specified size and fills the edges
  * @param img
  * @param new_shape
  * @return resize
@@ -60,8 +60,8 @@ Resize resize_and_pad(cv::Mat& img, cv::Size new_shape) {
 
 
 /**
- * ��ȡԭʼͼƬ��resizeͼƬ�����Ŀ���
- * @param image_path ͼƬ·��
+ * get image and resized image
+ * @param image_path
  * @return Resize
  */
 Resize get_image(const string& image_path){
@@ -74,7 +74,7 @@ Resize get_image(const string& image_path){
 
 
 /**
- * ��ȡ����õ�ģ��
+ * get openvino model
  * @param model_path
  * @return CompiledModel
  */
@@ -84,18 +84,18 @@ ov::CompiledModel get_model(const string& model_path, const string& device="CPU"
     // Step 2. Read a model
     std::shared_ptr<ov::Model> model = core.read_model(model_path);
 
-    // Step 4. Inizialize Preprocessing for the model   openvino����Ԥ����
+    // Step 4. Inizialize Preprocessing for the model
     // https://mp.weixin.qq.com/s/4lkDJC95at2tK_Zd62aJxw
     ov::preprocess::PrePostProcessor ppp = ov::preprocess::PrePostProcessor(model);
-    // Specify input image format �趨ͼƬ�������ͣ���״��ͨ���Ų�ΪBGR
+    // Specify input image format
     ppp.input().tensor().set_element_type(ov::element::u8).set_layout("NHWC")
         .set_color_format(ov::preprocess::ColorFormat::BGR);
-    // Specify preprocess pipeline to input image without resizing  Ԥ�������ı����ͣ�ת��ΪRGB��ͨ����һ��
+    // Specify preprocess pipeline to input image without resizing
     ppp.input().preprocess().convert_element_type(ov::element::f32)
         .convert_color(ov::preprocess::ColorFormat::RGB).scale({255., 255., 255.});
-    //  Specify model's input layout ָ��ģ��������״
+    //  Specify model's input layout
     ppp.input().model().set_layout("NCHW");
-    // Specify output results format ָ��ģ���������
+    // Specify output results format
     ppp.output().tensor().set_element_type(ov::element::f32);
     // Embed above steps in the graph
     model = ppp.build();
@@ -105,9 +105,9 @@ ov::CompiledModel get_model(const string& model_path, const string& device="CPU"
 
 
 /**
- * ����
- * @param detections ģ�����
- * @param output_shape �����״
+ * Post processing
+ * @param detections
+ * @param output_shape
  * @param res Resize
  */
 void post(float *detections, ov::Shape output_shape, Resize& res){
@@ -196,33 +196,31 @@ int main(){
     string model_path = "D:/ai/code/ultralytics/yolov5-openvino-cpp-python/weights/yolov5s_openvino_model_quantization/yolov5s.xml";
     string image_path = "D:/ai/code/ultralytics/yolov5-openvino-cpp-python/imgs/bus.jpg";
 
-    //��ȡԭʼͼƬ��resizeͼƬ�����Ŀ���
+    // Step 1. Get images
     Resize res = get_image(image_path);
 
-    //��ȡģ��
+    // Step 2. get CompiledModel
     ov::CompiledModel compiled_model = get_model(model_path, "CPU");
 
-    //��¼��ʼʱ�䣬ms
     auto start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    //����
-    // Step 5. Create tensor from image
+
+    // Step 3. Create tensor from image
     float *input_data = (float *) res.resized_image.data;
     ov::Tensor input_tensor = ov::Tensor(compiled_model.input().get_element_type(), compiled_model.input().get_shape(), input_data);
-    // Step 6. Create an infer request for model inference
+    // Step 4. Create an infer request for model inference
     ov::InferRequest infer_request = compiled_model.create_infer_request();
     infer_request.set_input_tensor(input_tensor);
     infer_request.infer();
-    //Step 7. Retrieve inference results
+    // Step 7. Retrieve inference results
     const ov::Tensor &output_tensor = infer_request.get_output_tensor();
     ov::Shape output_shape = output_tensor.get_shape();
     float *detections = output_tensor.data<float>();
 
-    //����
+    // Step 8. Post processing
     post(detections, output_shape, res);
-    //��¼����ʱ�䣬ms
     auto end = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     cout << end - start << "ms" << endl;
-    //����ͼƬ
+    // save image
     cv::imwrite("./openvino_detection.png", res.img);
     cv::imshow("openvino_detection", res.img);
     cv::waitKey(0);
