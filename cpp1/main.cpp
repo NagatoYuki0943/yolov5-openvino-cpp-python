@@ -86,6 +86,7 @@ ov::CompiledModel get_model(const string& model_path, const string& device="CPU"
 
     // Step 4. Inizialize Preprocessing for the model
     // https://mp.weixin.qq.com/s/4lkDJC95at2tK_Zd62aJxw
+    // https://docs.openvino.ai/latest/openvino_2_0_preprocessing.html
     ov::preprocess::PrePostProcessor ppp = ov::preprocess::PrePostProcessor(model);
     // Specify input image format
     ppp.input().tensor().set_element_type(ov::element::u8).set_layout("NHWC")
@@ -201,23 +202,31 @@ int main(){
 
     // Step 2. get CompiledModel
     ov::CompiledModel compiled_model = get_model(model_path, "CPU");
+    ov::InferRequest infer_request = compiled_model.create_infer_request();
 
+    // time
     auto start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     // Step 3. Create tensor from image
-    float *input_data = (float *) res.resized_image.data;
+    auto *input_data = (float *) res.resized_image.data;
     ov::Tensor input_tensor = ov::Tensor(compiled_model.input().get_element_type(), compiled_model.input().get_shape(), input_data);
+
     // Step 4. Create an infer request for model inference
-    ov::InferRequest infer_request = compiled_model.create_infer_request();
+    // many ways to infer
+    // https://docs.openvino.ai/latest/openvino_2_0_inference_pipeline.html
+    // https://docs.openvino.ai/latest/notebooks/002-openvino-api-with-output.html#
     infer_request.set_input_tensor(input_tensor);
     infer_request.infer();
+
     // Step 7. Retrieve inference results
     const ov::Tensor &output_tensor = infer_request.get_output_tensor();
     ov::Shape output_shape = output_tensor.get_shape();
-    float *detections = output_tensor.data<float>();
+    auto *detections = output_tensor.data<float>();
 
     // Step 8. Post processing
     post(detections, output_shape, res);
+
+    // time
     auto end = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     cout << end - start << "ms" << endl;
     // save image

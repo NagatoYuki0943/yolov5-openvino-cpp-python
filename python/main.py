@@ -64,6 +64,7 @@ def get_model(model_path, device='CPU'):
 
     # Step 4. Inizialize Preprocessing for the model  openvino数据预处理
     # https://mp.weixin.qq.com/s/4lkDJC95at2tK_Zd62aJxw
+    # https://docs.openvino.ai/latest/openvino_2_0_preprocessing.html
     ppp = PrePostProcessor(model)
     # Specify input image format 设定图片数据类型，形状，通道排布为BGR
     ppp.input().tensor().set_element_type(Type.u8).set_layout(Layout("NHWC")).set_color_format(ColorFormat.BGR)
@@ -96,7 +97,7 @@ def main():
     index2label = get_index2label(YAML_PATH)
 
     # Step 6. Create an infer request for model inference
-    infer_request = compiled_model.create_infer_request()
+    # infer_request = compiled_model.create_infer_request()
 
     # 获取模型的一些数据,多个输出和输出使用 [0] [1] 取出
     inputs = compiled_model.inputs
@@ -107,16 +108,18 @@ def main():
     print(outputs[0].index, outputs[0].names, outputs[0].shape, )   # 0 {'output0'} {1, 25200, 85}
 
     start = time.time()
-    # 设置输入
-    # infer_request.set_input_tensor(inputs[0].index, input_tensor)   # 有错误
 
-    # 推理 两种方式
-    # results = infer_request.infer({0: input_tensor})
-    results = infer_request.infer({inputs[0]: input_tensor})
+    # 推理 多种方式
+    # https://docs.openvino.ai/latest/openvino_2_0_inference_pipeline.html
+    # https://docs.openvino.ai/latest/notebooks/002-openvino-api-with-output.html#
+    # results = infer_request.infer({0: input_tensor})              # 同样支持list输入
+    # results = infer_request.infer({inputs[0]: input_tensor})
+    # results = compiled_model({inputs[0]: input_tensor})
+    results = compiled_model([input_tensor])
     # print(outputs.keys)           # <built-in method keys of dict object at 0x0000019A7C7C68C0>
 
     # 获取输出
-    # result = infer_request.get_output_tensor(outputs[0].index)      # outputs[0].index 可以用0 1代替
+    # result = infer_request.get_output_tensor(outputs[0].index)    # outputs[0].index 可以用0 1代替
     result = results[outputs[0]]
     print(result.shape)             # (1, 25200, 85)
     detections = result[0]          # 去除batch
