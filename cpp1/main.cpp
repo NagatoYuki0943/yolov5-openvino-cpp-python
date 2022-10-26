@@ -220,7 +220,7 @@ int main(){
     infer_request.infer();
 
     // Step 7. Retrieve inference results
-    const ov::Tensor &output_tensor = infer_request.get_output_tensor();
+    const ov::Tensor &output_tensor = infer_request.get_output_tensor(0);
     ov::Shape output_shape = output_tensor.get_shape();
     auto *detections = output_tensor.data<float>();
 
