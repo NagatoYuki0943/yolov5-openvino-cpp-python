@@ -89,20 +89,50 @@ ov::CompiledModel get_model(const string& model_path, const string& device="CPU"
     // https://blog.csdn.net/sandmangu/article/details/107181289
     // https://docs.openvino.ai/latest/openvino_2_0_preprocessing.html
     ov::preprocess::PrePostProcessor ppp = ov::preprocess::PrePostProcessor(model);
+
     // Specify input image format   input(0) refers to the 0th input.
-    ppp.input(0).tensor().set_element_type(ov::element::u8).set_layout(ov::Layout("NHWC"))
-        .set_color_format(ov::preprocess::ColorFormat::BGR);
+    ppp.input(0).tensor()
+        .set_color_format(ov::preprocess::ColorFormat::BGR)
+        .set_element_type(ov::element::u8)
+        .set_layout(ov::Layout("NHWC"));
+
     // Specify preprocess pipeline to input image without resizing
-    ppp.input(0).preprocess().convert_element_type(ov::element::f32)
-        .convert_color(ov::preprocess::ColorFormat::RGB).scale({255., 255., 255.});
+    ppp.input(0).preprocess()
+        .convert_color(ov::preprocess::ColorFormat::RGB)
+        .convert_element_type(ov::element::f32)
+        .scale({255., 255., 255.});
+
     //  Specify model's input layout
     ppp.input(0).model().set_layout(ov::Layout("NCHW"));
+
     // Specify output results format
     ppp.output(0).tensor().set_element_type(ov::element::f32);
+
     // Embed above steps in the graph
     model = ppp.build();
     ov::CompiledModel compiled_model = core.compile_model(model, device);
     return compiled_model;
+
+
+    // input().tensor()       有7个方法
+    // ppp.input().tensor().set_color_format().set_element_type().set_layout()
+    //                     .set_memory_type().set_shape().set_spatial_dynamic_shape().set_spatial_static_shape();
+
+    // output().tensor()      有2个方法
+    // ppp.output().tensor().set_layout().set_element_type();
+
+    // input().preprocess()   有8个方法
+    // ppp.input().preprocess().convert_color().convert_element_type().mean().scale()
+    //                         .convert_layout().reverse_channels().resize().custom();
+
+    // output().postprocess() 有3个方法
+    // ppp.output().postprocess().convert_element_type().convert_layout().custom();
+
+    // input().model()  只有1个方法
+    // ppp.input().model().set_layout();
+
+    // output().model() 只有1个方法
+    // ppp.output().model().set_layout();
 }
 
 

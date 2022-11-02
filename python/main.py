@@ -35,17 +35,41 @@ def get_image(image_path):
         Tuple: 原图, 输入的tensor, 填充的宽, 填充的高
     """
     img = cv2.imread(str(Path(image_path)))
-    # img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2RGB)    # BGR2RGB                   ppp实现了
+    # img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2RGB)    # BGR2RGB                  ppp实现了
 
     img_reized, delta_w ,delta_h = resize_and_pad(img, (640, 640))
 
     img_reized = img_reized.astype(np.float32)
-    # input_tensor /= 255.0                                 # 归一化                     ppp实现了
+    # input_tensor /= 255.0                                 # 归一化                    ppp实现了
 
     # img_reized = img_reized.transpose(2, 0, 1)            # [H, W, C] -> [C, H, W]    ppp实现了
     input_tensor = np.expand_dims(img_reized, 0)            # [C, H, W] -> [B, C, H, W]
 
     return img, input_tensor, delta_w ,delta_h
+
+
+"""openvino图片预处理方法
+
+# input().tensor()       有7个方法
+ppp.input().tensor().set_color_format().set_element_type().set_layout() \
+                    .set_memory_type().set_shape().set_spatial_dynamic_shape().set_spatial_static_shape()
+
+# output().tensor()      有2个方法
+ppp.output().tensor().set_layout().set_element_type()
+
+# input().preprocess()   有8个方法
+ppp.input().preprocess().convert_color().convert_element_type().mean().scale() \
+                        .convert_layout().reverse_channels().resize().custom()
+
+# output().postprocess() 有3个方法
+ppp.output().postprocess().convert_element_type().convert_layout().custom()
+
+# input().model()  只有1个方法
+ppp.input().model().set_layout()
+
+# output().model() 只有1个方法
+ppp.output().model().set_layout()
+"""
 
 
 def get_model(model_path, device='CPU'):
@@ -68,9 +92,9 @@ def get_model(model_path, device='CPU'):
     # https://docs.openvino.ai/latest/openvino_2_0_preprocessing.html
     ppp = PrePostProcessor(model)
     # 设定图片数据类型，形状，通道排布为BGR     input(0) 指的是第0个输入
-    ppp.input(0).tensor().set_element_type(Type.u8).set_layout(Layout("NHWC")).set_color_format(ColorFormat.BGR)
+    ppp.input(0).tensor().set_color_format(ColorFormat.BGR).set_element_type(Type.u8).set_layout(Layout("NHWC"))
     # 预处理: 改变类型,转换为RGB,通道归一化(标准化中的除以均值也能这样求),还有.mean()均值 mean要在scale前面
-    ppp.input(0).preprocess().convert_element_type(Type.f32).convert_color(ColorFormat.RGB).scale([255., 255., 255.])
+    ppp.input(0).preprocess().convert_color(ColorFormat.RGB).convert_element_type(Type.f32).scale([255., 255., 255.])
     # 指定模型输入形状
     ppp.input(0).model().set_layout(Layout("NCHW"))
     # 指定模型输出类型
