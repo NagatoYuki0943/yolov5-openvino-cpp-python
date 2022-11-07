@@ -67,3 +67,25 @@ python main.py
 ## Final Result:
 
 ![IMAGE_DESCRIPTION](./imgs/result.png)
+
+
+
+# Error
+
+### openvino DLL load failed while importing ie_api
+
+> https://blog.csdn.net/qq_26815239/article/details/123047840
+>
+> 如果你使用的是 Python 3.8 或更高版本，并且是在Windows系统下通过pip安装的openvino，那么该错误的解决方案如下：
+
+1. 进入目录 `your\env\site-packages\openvino\inference_engine`
+2. 打开文件 `__init__.py`
+3. 26行下添加一行
+
+```python
+        if os.path.isdir(lib_path):
+            # On Windows, with Python >= 3.8, DLLs are no longer imported from the PATH.
+            if (3, 8) <= sys.version_info:
+                os.add_dll_directory(os.path.abspath(lib_path))
+                os.environ['PATH'] = os.path.abspath(lib_path) + ';' + os.environ['PATH']	# 添加这一行
+```
