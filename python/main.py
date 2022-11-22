@@ -49,6 +49,7 @@ def get_image(image_path):
 
 
 """openvino图片预处理方法
+input(0)/output(0) 按照id找指定的输入输出,不指定找全部的输入输出
 
 # input().tensor()       有7个方法
 ppp.input().tensor().set_color_format().set_element_type().set_layout() \
@@ -91,14 +92,14 @@ def get_model(model_path, device='CPU'):
     # https://blog.csdn.net/sandmangu/article/details/107181289
     # https://docs.openvino.ai/latest/openvino_2_0_preprocessing.html
     ppp = PrePostProcessor(model)
-    # 设定图片数据类型，形状，通道排布为BGR     input(0) 指的是第0个输入
+    # 设定图片数据类型，形状，通道排布为BGR
     ppp.input(0).tensor().set_color_format(ColorFormat.BGR).set_element_type(Type.u8).set_layout(Layout("NHWC"))
     # 预处理: 改变类型,转换为RGB,通道归一化(标准化中的除以均值也能这样求),还有.mean()均值 mean要在scale前面
     ppp.input(0).preprocess().convert_color(ColorFormat.RGB).convert_element_type(Type.f32).scale([255., 255., 255.])
     # 指定模型输入形状
     ppp.input(0).model().set_layout(Layout("NCHW"))
     # 指定模型输出类型
-    ppp.output(0).tensor().set_element_type(Type.f32)
+    ppp.output().tensor().set_element_type(Type.f32)
     # Embed above steps in the graph
     model = ppp.build()
     compiled_model = core.compile_model(model, device)
@@ -112,19 +113,16 @@ def main():
     IMAGE_PATH = "../imgs/bus.jpg"
     YAML_PATH  = "../weights/yolov5s_openvino_model/yolov5s.yaml"
 
-    # 获取图片,扩展的宽高
+    # 1.获取图片,扩展的宽高
     img, input_tensor, delta_w ,delta_h = get_image(IMAGE_PATH)
 
-    # 获取模型
+    # 2.获取模型
     compiled_model = get_model(MODEL_PATH, 'CPU')
 
-    # 获取label
+    # 3.获取label
     index2label = get_index2label(YAML_PATH)
 
-    # Step 6. Create an infer request for model inference
-    # infer_request = compiled_model.create_infer_request()
-
-    # 获取模型的一些数据,多个输出和输出使用 [0] [1] 取出
+    # 4.获取模型的一些数据,多个输出和输出使用 [0] [1] 取出
     inputs = compiled_model.inputs
     outputs = compiled_model.outputs
     print(f"inputs: {inputs}")                                      # inputs: [<ConstOutput: names[images] shape{1,640,640,3} type: u8>]
@@ -134,12 +132,19 @@ def main():
 
     start = time.time()
 
-    # 推理 多种方式
+    # 5.推理 多种方式
     # https://docs.openvino.ai/latest/openvino_2_0_inference_pipeline.html
     # https://docs.openvino.ai/latest/notebooks/002-openvino-api-with-output.html#
-    # results = infer_request.infer({0: input_tensor})              # 同样支持list输入
-    # results = infer_request.infer({inputs[0]: input_tensor})
-    # results = compiled_model({inputs[0]: input_tensor})
+
+    # 5.1 使用推理请求
+    # infer_request = compiled_model.create_infer_request()
+    # results       = infer_request.infer({inputs[0]: input_tensor})    # 直接返回推理结果
+    # results       = infer_request.infer({0: input_tensor})            # 直接返回推理结果
+    # results       = infer_request.infer([input_tensor])               # 直接返回推理结果
+
+    # 5.2 模型直接推理
+    # results       = compiled_model({inputs[0]: input_tensor})
+    # results       = compiled_model({0: input_tensor})
     results = compiled_model([input_tensor])
     # print(outputs.keys)           # <built-in method keys of dict object at 0x0000019A7C7C68C0>
 

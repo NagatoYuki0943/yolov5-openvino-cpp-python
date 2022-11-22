@@ -74,6 +74,31 @@ Resize get_image(const string& image_path){
 
 
 /**
+ * input(0)/output(0) 按照id找指定的输入输出，不指定找全部的输入输出
+ *
+ *  input().tensor()       有7个方法
+ *  ppp.input().tensor().set_color_format().set_element_type().set_layout()
+ *                      .set_memory_type().set_shape().set_spatial_dynamic_shape().set_spatial_static_shape();
+ *
+ *  output().tensor()      有2个方法
+ *  ppp.output().tensor().set_layout().set_element_type();
+ *
+ *  input().preprocess()   有8个方法
+ *  ppp.input().preprocess().convert_color().convert_element_type().mean().scale()
+ *                          .convert_layout().reverse_channels().resize().custom();
+ *
+ *  output().postprocess() 有3个方法
+ *  ppp.output().postprocess().convert_element_type().convert_layout().custom();
+ *
+ *  input().model()  只有1个方法
+ *  ppp.input().model().set_layout();
+ *
+ *  output().model() 只有1个方法
+ *  ppp.output().model().set_layout();
+ **/
+
+
+/**
  * get openvino model
  * @param model_path
  * @return CompiledModel
@@ -112,27 +137,6 @@ ov::CompiledModel get_model(const string& model_path, const string& device="CPU"
     model = ppp.build();
     ov::CompiledModel compiled_model = core.compile_model(model, device);
     return compiled_model;
-
-
-    // input().tensor()       有7个方法
-    // ppp.input().tensor().set_color_format().set_element_type().set_layout()
-    //                     .set_memory_type().set_shape().set_spatial_dynamic_shape().set_spatial_static_shape();
-
-    // output().tensor()      有2个方法
-    // ppp.output().tensor().set_layout().set_element_type();
-
-    // input().preprocess()   有8个方法
-    // ppp.input().preprocess().convert_color().convert_element_type().mean().scale()
-    //                         .convert_layout().reverse_channels().resize().custom();
-
-    // output().postprocess() 有3个方法
-    // ppp.output().postprocess().convert_element_type().convert_layout().custom();
-
-    // input().model()  只有1个方法
-    // ppp.input().model().set_layout();
-
-    // output().model() 只有1个方法
-    // ppp.output().model().set_layout();
 }
 
 
